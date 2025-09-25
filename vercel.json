@@ -12,9 +12,6 @@
       "maxDuration": 10
     }
   },
-  "deploymentProtection": {
-    "passwordProtection": false
-  },
   "headers": [
     {
       "source": "/(.*)",

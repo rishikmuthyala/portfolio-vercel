@@ -8,17 +8,35 @@ const openai = new OpenAI({
 
 export async function POST(request: NextRequest) {
   try {
-    const { message, conversationHistory } = await request.json()
+    const body = await request.json()
+    console.log('AI Chat API called with body:', JSON.stringify(body, null, 2))
+    
+    // Handle both formats: { messages: [...] } and { message: "...", conversationHistory: [...] }
+    let conversationMessages: any[] = []
+    let currentMessage: string = ''
+    
+    if (body.messages && Array.isArray(body.messages)) {
+      // Format from TechBot app: { messages: [{role, content}...] }
+      conversationMessages = body.messages
+      const lastUserMessage = body.messages.filter((m: any) => m.role === 'user').pop()
+      currentMessage = lastUserMessage?.content || ''
+      console.log('Using messages array format, last message:', currentMessage)
+    } else if (body.message) {
+      // Format from other chat components: { message: "...", conversationHistory: [...] }
+      currentMessage = body.message
+      conversationMessages = body.conversationHistory || []
+      console.log('Using single message format:', currentMessage)
+    }
 
-    if (!message) {
+    if (!currentMessage) {
       return NextResponse.json(
-        { error: 'Message is required' },
+        { error: 'No message content found' },
         { status: 400 }
       )
     }
 
     console.log('OpenAI API Key exists:', !!process.env.OPENAI_API_KEY)
-    console.log('Incoming message:', message)
+    console.log('Processing message:', currentMessage)
 
     let aiResponse: string
 
@@ -32,16 +50,26 @@ export async function POST(request: NextRequest) {
           }
         ]
 
-        // Add conversation history if provided
-        if (conversationHistory && Array.isArray(conversationHistory)) {
-          messages.push(...conversationHistory.slice(-10)) // Keep last 10 messages for context
+        // Add conversation history
+        if (conversationMessages.length > 0) {
+          // If we already have formatted messages, use them
+          if (body.messages) {
+            messages.push(...conversationMessages.slice(-10))
+          } else {
+            // Otherwise add the conversation history and current message
+            messages.push(...conversationMessages.slice(-10))
+            messages.push({
+              role: 'user' as const,
+              content: currentMessage
+            })
+          }
+        } else {
+          // No history, just add current message
+          messages.push({
+            role: 'user' as const,
+            content: currentMessage
+          })
         }
-
-        // Add current message
-        messages.push({
-          role: 'user' as const,
-          content: message
-        })
 
         console.log('Calling OpenAI API...')
         const completion = await openai.chat.completions.create({

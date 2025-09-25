@@ -62,6 +62,12 @@ export function AIChatApp() {
     setIsLoading(true)
 
     try {
+      console.log('Sending message to /api/ai-chat')
+      console.log('Messages being sent:', [...messages, userMessage].map(msg => ({
+        role: msg.role,
+        content: msg.content
+      })))
+      
       // Call OpenAI API for natural conversation
       const response = await fetch('/api/ai-chat', {
         method: 'POST',
@@ -76,11 +82,21 @@ export function AIChatApp() {
         })
       })
 
+      console.log('Response status:', response.status)
+      console.log('Response ok:', response.ok)
+
       if (!response.ok) {
-        throw new Error('Failed to get AI response')
+        const errorText = await response.text()
+        console.error('Error response:', errorText)
+        throw new Error(`Failed to get AI response: ${response.status} - ${errorText}`)
       }
 
       const data = await response.json()
+      console.log('Response data:', data)
+      
+      if (!data.response) {
+        throw new Error('No response content in API response')
+      }
       
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -89,11 +105,20 @@ export function AIChatApp() {
         timestamp: new Date()
       }
 
-
       setMessages(prev => [...prev, assistantMessage])
     } catch (error) {
       console.error('Error sending message:', error)
-      toast.error('Failed to send message. Please try again.')
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error'
+      toast.error(`Failed to send message: ${errorMsg}`)
+      
+      // Add error message to chat
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: `Sorry, I encountered an error: ${errorMsg}. Please try again or refresh the page.`,
+        timestamp: new Date()
+      }
+      setMessages(prev => [...prev, errorMessage])
     } finally {
       setIsLoading(false)
     }
