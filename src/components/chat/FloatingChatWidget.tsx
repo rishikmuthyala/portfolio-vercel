@@ -71,6 +71,8 @@ export function FloatingChatWidget() {
     setIsLoading(true)
 
     try {
+      console.log('Sending message to /api/chat:', content)
+      
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
@@ -82,9 +84,17 @@ export function FloatingChatWidget() {
         })
       })
 
-      const data = await response.json()
+      console.log('Response status:', response.status)
+      console.log('Response ok:', response.ok)
 
-      if (data.success) {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const data = await response.json()
+      console.log('Response data:', data)
+
+      if (data.success && data.response) {
         const assistantMessage: Message = {
           id: (Date.now() + 1).toString(),
           role: 'assistant',
@@ -93,14 +103,14 @@ export function FloatingChatWidget() {
         }
         setMessages(prev => [...prev, assistantMessage])
       } else {
-        throw new Error(data.error || 'Failed to get response')
+        throw new Error(data.error || 'No response received from API')
       }
     } catch (error) {
-      console.error('Chat error:', error)
+      console.error('Chat error details:', error)
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: "I'm sorry, I encountered an error. Please try again later.",
+        content: `Failed to send message. Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
         timestamp: new Date()
       }
       setMessages(prev => [...prev, errorMessage])

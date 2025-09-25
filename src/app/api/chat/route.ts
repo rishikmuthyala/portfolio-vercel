@@ -19,15 +19,23 @@ const generateSimulatedResponse = (message: string): string => {
 
 export async function POST(request: NextRequest) {
   try {
-    const { message } = await request.json()
+    console.log('Chat API called')
+    const body = await request.json()
+    console.log('Request body:', body)
+    
+    const { message } = body
 
     if (!message) {
+      console.log('No message provided')
       return NextResponse.json(
         { error: 'Message is required' },
         { status: 400 }
       )
     }
 
+    console.log('Processing message:', message)
+    console.log('OpenAI API Key exists:', !!process.env.OPENAI_API_KEY)
+    
     let aiResponse: string
 
     if (process.env.OPENAI_API_KEY) {
@@ -58,11 +66,15 @@ export async function POST(request: NextRequest) {
       })
 
       aiResponse = completion.choices[0]?.message?.content || "I'm sorry, I couldn't generate a response."
+      console.log('OpenAI response:', aiResponse)
     } else {
       // Fallback to simulated responses for development
+      console.log('Using fallback response')
       aiResponse = generateSimulatedResponse(message)
     }
 
+    console.log('Sending response:', aiResponse)
+    
     return NextResponse.json({
       success: true,
       response: aiResponse
