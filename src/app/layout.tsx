@@ -27,6 +27,13 @@ export const metadata: Metadata = {
   keywords: SITE_CONFIG.keywords,
   authors: [{ name: SITE_CONFIG.author }],
   creator: SITE_CONFIG.author,
+  icons: {
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.ico', sizes: '32x32' }
+    ],
+    apple: '/apple-icon.png',
+  },
   openGraph: {
     type: "website",
     locale: "en_US",

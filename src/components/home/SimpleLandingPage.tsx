@@ -73,7 +73,7 @@ export function SimpleLandingPage() {
   }
 
   return (
-    <section className="relative h-[calc(100vh-4rem)] flex items-center justify-center overflow-hidden bg-background">
+    <section className="relative min-h-[calc(100vh-4rem)] h-[calc(100vh-4rem)] flex items-center justify-center overflow-hidden bg-background">
       {/* Fast Short Diagonal Lines */}
       <div className="absolute inset-0">
         {/* Short diagonal dashed lines - all going top-left to bottom-right */}
